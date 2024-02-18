@@ -5,8 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-
 from column_names import column_names
+import time
 
 try:
     details = pd.DataFrame(columns=column_names)
@@ -16,72 +16,75 @@ try:
     driver.get(URL)
 
     dropdown = Select(driver.find_element(By.NAME, "Sid"))
-    dropdown.select_by_visible_text("NEEBA E A")
-    driver.find_element(By.XPATH, "//input[@type='submit']").click()
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "B1")))
+    options = dropdown.options
+    for option in options:
+        option.click()
 
-    table = driver.find_element(By.XPATH, "//table[@width='70%']")
-    rows = table.find_elements(By.XPATH, ".//tr")
-    info = []
 
-    for row in rows:
-        try:
+        driver.find_element(By.XPATH, "//input[@type='submit']").click()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "B1")))
+
+        table = driver.find_element(By.XPATH, "//table[@width='70%']")
+        rows = table.find_elements(By.XPATH, ".//tr")
+        info = []
+
+        for row in rows:
             try:
-                second_cell = row.find_element(By.XPATH, ".//td[2]")
-            except NoSuchElementException:
-                second_cell = row.find_element(By.XPATH, ".//td[1]")
+                try:
+                    second_cell = row.find_element(By.XPATH, ".//td[2]")
+                except NoSuchElementException:
+                    second_cell = row.find_element(By.XPATH, ".//td[1]")
 
-            input_element = second_cell.find_elements(By.TAG_NAME, "input")
-            if input_element:
-                value = input_element[0].get_attribute("value")
-                if value == "":
-                    value = "NaN"
-                elif value == 'ON':
-                    value = 'YES'
-                elif value == 'OFF':
-                    value = 'NO'
-                info.append(value)
-                continue  # Move to the next row
+                input_element = second_cell.find_elements(By.TAG_NAME, "input")
+                if input_element:
+                    value = input_element[0].get_attribute("value")
+                    if value == "":
+                        value = "NaN"
+                    elif value == 'ON':
+                        value = 'YES'
+                    elif value == 'OFF':
+                        value = 'NO'
+                    info.append(value)
+                    continue  # Move to the next row
 
-            select_element = second_cell.find_elements(By.TAG_NAME, "select")
-            if select_element:
-                options = select_element[0].find_elements(By.TAG_NAME, "option")
-                if options:
-                    value = options[0].get_attribute("value")
-                    if value:
-                        info.append(value)
-                    else:
-                        default_option = options[0].get_attribute("selected")
-                        if default_option:
-                            value = "NaN"
+                select_element = second_cell.find_elements(By.TAG_NAME, "select")
+                if select_element:
+                    options = select_element[0].find_elements(By.TAG_NAME, "option")
+                    if options:
+                        value = options[0].get_attribute("value")
+                        if value:
                             info.append(value)
                         else:
-                            value = "NaN"
-                            info.append(value)
-                continue
+                            default_option = options[0].get_attribute("selected")
+                            if default_option:
+                                value = "NaN"
+                                info.append(value)
+                            else:
+                                value = "NaN"
+                                info.append(value)
+                    continue
 
-            value = second_cell.text.strip()
-            if value == "":
-                value = "NaN"
-            info.append(value)
+                value = second_cell.text.strip()
+                if value == "":
+                    value = "NaN"
+                info.append(value)
 
-        except (NoSuchElementException, IndexError) as e:
-            print(f"Error: {e}")
+            except (NoSuchElementException, IndexError) as e:
+                print(f"Error: {e}")
 
-    # Output the extracted data
-    print("\nExtracted Data:")
-    del info[0]
-    del info[43]
-    for index, element in enumerate(info):
-        print(f"{index + 1}. {element}")
+        print("\nExtracted Data:")
+        del info[0]
+        del info[43]
+        # for index, element in enumerate(info):
+        #     print(f"{index + 1}. {element}")
 
-    # Add the extracted data to the DataFrame
-    details.loc[len(details)] = info
-    print("\nDataFrame:")
-    print(details)
+        details.loc[len(details)] = info
+        print("\nDataFrame:")
+        print(details)
+        details.to_excel('details.xlsx', index=False)
+        driver.back()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "B2")))
 
-    # Save the DataFrame to an Excel file
-    details.to_excel('details.xlsx', index=False)
 
 except TimeoutException:
     print("Timeout occurred while waiting for the page to load.")
