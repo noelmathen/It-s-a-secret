@@ -5,8 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+
 from column_names import column_names
-import time
 
 try:
     details = pd.DataFrame(columns=column_names)
@@ -89,31 +89,3 @@ except Exception as e:
     print(f"An error occurred: {e}")
 finally:
     driver.quit()
-
-
-for option in options:
-    option.click()
-    time.sleep(1.5)
-    driver.find_element(By.XPATH, "//input[@type='submit']").click()
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located(
-            (By.NAME, "B1")
-        )
-    )
-
-    table = driver.find_element(By.XPATH, "//table[@width='70%']")
-    data={}
-    rows = table.find_elements(By.NAME, "tr")
-    for row in rows:
-        cells = row.find_elements(By.NAME, "td")
-        print(cells[0].text)
-
-
-    # print(table.text.strip())
-    time.sleep(1.5)
-    
-
-    driver.back()
-    print("Zett")
-    time.sleep(1.5)
-
