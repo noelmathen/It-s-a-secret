@@ -6,66 +6,8 @@ from selenium.webdriver.support.select import Select
 import time
 import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
+from .column_names import column_names
 
-column_names = [
-    'Enroll Number',
-    'Name',
-    'Faculty Code(3 Digit Code eg:"AGP")',
-    'Designation',
-    'Gender',
-    'Date of Birth [Official]',
-    'Date of Birth [Actual]',
-    'Qualifications',
-    'Additional Eligibility/Qualifications',
-    'Department',
-    'KTU-ID',
-    'Google Scholar ID',
-    'ORCID iD',
-    'Year of obtaining Ph. D.(if Applicable)',
-    'Year of recognition as Ph.D. guide(if Applicable)',
-    'Ph.D Guideship',
-    'Religion',
-    'Caste',
-    'Category',
-    'Communication Address',
-    'Permanent Address',
-    'Blood Group',
-    'Physically Handicapped',
-    'Aadhar No.',
-    'Experience',
-    'Area of Interest',
-    'Memberships, if any',
-    'Email Address(RAJAGIRITECH.EDU.IN)',
-    'Email Address(GMAIL)',
-    'Mobile Number',
-    'Whatsapp Number',
-    'Facebook Profile[link]',
-    'Linkedin Profile[link]',
-    'Instagram Profile[link]',
-    'Twitter Profile[link]',
-    'Threads Profile[link]',
-    'Personal Website',
-    'Landline',
-    'Emergency Contact Number',
-    'Staff/Lab Phone Extn. No',
-    'Staff/Lab Room No',
-    'Staff/Lab Room Name',
-    'Primary Vehicle Type',
-    'Vehicle No',
-    'Secondary Vehicle Type',
-    'Vehicle No',
-    'Third Vehicle Type',
-    'Vehicle No',
-    'Rajagiri Valley South Indian Bank A/C No',
-    'College Laptop Number(if Any)',
-    'College Laptop Make(if Any)',
-    'Laptop Issue Date',
-    'Active',
-    'Date of Join',
-    'Date of Joining in Teaching Profession',
-    'No of Years Spent Other than Teaching Jobs',
-    'Last Promotion Date'
-]
 
 details = pd.DataFrame(columns=column_names)
 print(details)
@@ -75,6 +17,7 @@ URL = "https://www.rajagiritech.ac.in/stud/ktu/Faculty/Fac_details.asp"
 driver.get(URL)
 
 dropdown = Select(driver.find_element(By.NAME, "Sid"))
+dropdown.select_by_visible_text("SONIA PAUL")
 driver.find_element(By.XPATH, "//input[@type='submit']").click()
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located(
@@ -84,19 +27,25 @@ WebDriverWait(driver, 10).until(
 
 table = driver.find_element(By.XPATH, "//table[@width='70%']")
 rows = table.find_elements(By.XPATH, ".//tr")
+info = []
 
 for row in rows:
     try:
-        second_cell = row.find_element(By.XPATH, ".//td[2]")
-
-        # vTable = second_cell.find_elements(By.XPATH, "./table[@width='100%']")
-        # if vTable:
-        #     print(vTable[0].text.strip())
-        #     continue
+        try:
+            second_cell = row.find_element(By.XPATH, ".//td[2]")
+        except NoSuchElementException:
+            second_cell = row.find_element(By.XPATH, ".//td[1]")
 
         input_element = second_cell.find_elements(By.TAG_NAME, "input")
         if input_element:
             value = input_element[0].get_attribute("value")
+            if value == "":
+                value = "NaN"
+            elif value == 'ON':
+                value = 'YES'
+            elif value == 'OFF':
+                value = 'NO'
+            info.append(value)
             print("Value:", value)
             continue  # Move to the next row
         
@@ -106,19 +55,53 @@ for row in rows:
             if options:
                 value = options[0].get_attribute("value")
                 if value:
+                    info.append(value)
                     print("Selected Value:", value)
                 else:
-                    print("No option selected")
+                    # Check if the default option is selected (i.e., no option is selected)
+                    default_option = options[0].get_attribute("selected")
+                    if default_option:
+                        value = "NaN"
+                        info.append(value)
+                        print("No option selected")
+                    else:
+                        value = "NaN"
+                        info.append(value)
+                        print("Selected Value:", "")
             else:
                 print("No options available")
             continue
 
-        
         value = second_cell.text.strip()
+        if value == "":
+            value = "NaN"
+        info.append(value)
         print("Text Value:", value)
         
     except IndexError:
         print("No cells found in row")
+
+print("\n")
+del info[0]
+del info[43]
+for index, element in enumerate(info):
+    print(f"{index + 1}. {element}")
+
+
+# # Handle nested table for vehicle information
+#         nested_table = second_cell.find_element(By.XPATH, ".//table[@border='0']/tbody")
+#         vehicle_info = nested_table.find_elements(By.TAG_NAME, "tr")
+#         for info_row in vehicle_info:
+#             vehicle_type = info_row.find_element(By.TAG_NAME, "select").get_attribute("value").strip()
+#             vehicle_number = info_row.find_element(By.TAG_NAME, "input").get_attribute("value").strip()
+#             print("Vehicle Type:", vehicle_type)
+#             print("Vehicle Number:", vehicle_number)
+
+        # vTable = second_cell.find_elements(By.XPATH, "./table[@width='100%']")
+        # if vTable:
+        #     print(vTable[0].text.strip())
+        #     continue
+
 
 # for option in options:
 #     option.click()
