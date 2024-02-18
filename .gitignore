@@ -1,2 +1,4 @@
 my_env
-feedback.py
+__pycache__
+column_names.py
+details.xlsx

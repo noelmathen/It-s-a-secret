@@ -43,6 +43,7 @@ column_names = [
     'Staff/Lab Room Name',
     'Primary Vehicle No',
     'Secondary Vehicle No',
+    'Third Vehicle No',
     'Rajagiri Valley South Indian Bank A/C No',
     'College Laptop Number(if Any)',
     'College Laptop Make(if Any)',
