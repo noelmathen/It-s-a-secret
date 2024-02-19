@@ -3,3 +3,4 @@ __pycache__
 column_names.py
 details.xlsx
 details_from_name.py
+.env

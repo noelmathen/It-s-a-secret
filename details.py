@@ -6,24 +6,23 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from column_names import column_names
-import time
+from dotenv import load_dotenv
+import os
 
 try:
     details = pd.DataFrame(columns=column_names)
-
     driver = webdriver.Chrome()
-    URL = "https://www.rajagiritech.ac.in/stud/ktu/Faculty/Fac_details.asp"
+    load_dotenv()
+    URL = os.getenv('URL')
     driver.get(URL)
 
     dropdown = Select(driver.find_element(By.NAME, "Sid"))
     options = dropdown.options
+
     for option in options:
         option.click()
-
-
         driver.find_element(By.XPATH, "//input[@type='submit']").click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "B1")))
-
         table = driver.find_element(By.XPATH, "//table[@width='70%']")
         rows = table.find_elements(By.XPATH, ".//tr")
         info = []
@@ -45,7 +44,7 @@ try:
                     elif value == 'OFF':
                         value = 'NO'
                     info.append(value)
-                    continue  # Move to the next row
+                    continue  
 
                 select_element = second_cell.find_elements(By.TAG_NAME, "select")
                 if select_element:
